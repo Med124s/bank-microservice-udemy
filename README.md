@@ -113,7 +113,7 @@ Config Server provides encryption endpoints:
 ## 👨‍💻 Author
 
 **Mohamed Ben-yghil**
-Master in Software Engineering (Big Data & Cloud Computing)
+Software Engineering
 
 ---
 
