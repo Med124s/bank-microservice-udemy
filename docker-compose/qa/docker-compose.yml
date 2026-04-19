@@ -1,0 +1,100 @@
+services:
+  rabbit:
+    image: rabbitmq:4-management
+    hostname: rabbitmq #اسم container فـ الشبكة
+    ports:
+      - "5672:5672" #connexion spring boot
+      - "15672:15672" #management web (dashboard)
+    healthcheck:
+      #أمر كيتنفذ داخل container
+      #✔️ كيتأكد أن RabbitMQ يقدر يتواصل عبر ports
+      test: rabbitmq-diagnostics check_port_connectivity
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 5s
+    extends:
+      file: common-config.yml
+      service: network-deploy-service
+
+  configserver:
+    image: "mbenyghil/configserver:s6"
+    container_name: "configserver-ms"
+    ports:
+      - "8071:8071"
+    depends_on:
+      rabbit:
+        condition: service_healthy
+    #هاد healthcheck ديال Docker Compose خدام بفكرة بسيطة:
+    #كيشيك واش Config Server راه “ready” فعلاً قبل ما Docker يعتبره healthy.
+
+    #curl localhost:8071/...
+    #👉 كيسول Spring Boot Actuator: واش الخدمة خدامة
+    #--fail
+    #👉 إلا جا HTTP error (400/500) → يفشل مباشرة
+    #--silent
+    #👉 ما يخرجش logs مزعجين
+    #grep UP
+    #👉 كيقلب على كلمة UP فـ response
+    #|| exit 1
+    #👉 إلا ما لقا حتى حاجة → يعتبر healthcheck failed
+    healthcheck:
+      test: "curl --fail --silent localhost:8071/actuator/health/readiness | grep UP || exit 1"
+      interval: 10s #👉 كيدير check كل 10 ثواني
+      timeout: 5s #إلا curl طول أكثر من 5 ثواني → fail
+      retries: 10 #خاص 10 مرات fail باش يقول container “unhealthy”
+      start_period: 10s #كيعطي 10 ثواني grace period فالبداية (باش Spring يقلع)
+    extends:
+      file: common-config.yml
+      service: microservice-base-config
+
+  accounts:
+    image: "mbenyghil/accounts:s6"
+    container_name: "accounts-ms"
+    ports:
+      - "8080:8080"
+    depends_on:
+      configserver:
+        condition: service_healthy
+    environment:
+      SPRING_APPLICATION_NAME: "accounts"
+    extends:
+      file: common-config.yml
+      service: microservice-configserver-config
+
+  loans:
+    image: "mbenyghil/loans:s6"
+    container_name: "loans-ms"
+    ports:
+      - "8090:8090"
+    #“ما تبداش service ديالي (loans) حتى يكون واحد service آخر واجد”
+    depends_on:
+      configserver:
+        condition: service_healthy
+    environment:
+      SPRING_APPLICATION_NAME: "loans"
+    extends:
+      file: common-config.yml
+      service: microservice-configserver-config
+
+  cards:
+    image: "mbenyghil/cards:s6"
+    container_name: "cards-ms"
+    ports:
+      - "9000:9000"
+    depends_on:
+      configserver:
+        condition: service_healthy
+    environment:
+      SPRING_APPLICATION_NAME: "cards"
+    extends:
+      file: common-config.yml
+      service: microservice-configserver-config
+
+
+
+networks:
+  mbenyghil:
+    driver: "bridge"   #bridge type de networking between container, there are a lot, like host/overlay(for multy machine)
+
+

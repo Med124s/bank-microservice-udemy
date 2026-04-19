@@ -1,0 +1,61 @@
+spring:
+  application:
+    name: "configserver"
+
+  profiles:
+    active: git
+  #active: native #local
+
+  cloud:
+    config:
+      server:
+        #native: #local files
+         #search-locations: "classpath:/config"
+         #search-locations: "file:///D://Lesson_Microservice_Udemy/section-6/config"
+        git:
+          uri: "https://github.com/Med124s/bank-config.git"
+          default-label: myBranch
+          timeout: 5 #timeout error si no found repos git after 5s
+          clone-on-start: true #ملي كيبدا Config Server، كيدير clone ديال repo مباشرة   لا درتيها false:   غادي ينتظر حتى أول request باش يدير clone
+          force-pull: true #كل مرة كيجي request، السيرفر كيعمل pull جديد  اش يضمن أنه عندك آخر version من config
+    bus:
+      enabled: true
+
+  #Message Broker
+  rabbitmq:
+    host: "localhost"
+    port: 5672
+    username: "guest"
+    password: "guest"
+
+encrypt:
+  key: "45D81EC1EF61DF9AD8D3E5BB397F9"
+#encrypt: http://localhost:8071/encrypt method post et en pass par exemple email (med.2016.ben@gmail.com) et en retour crypt d'email
+#decrypt: http://localhost:8071/decrypt method post et en pass par exemple chiffre dycrypt et en prend value (email)
+
+server:
+  port: 8071
+
+#http://localhost:8071/accounts/prod  lien pour tester les services clients
+
+#Actuator Configuration: monitoring tool (moraqaba)
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+  health:
+    readiness-state:
+      enabled: true
+    liveness-state:
+      enabled: true
+  endpoint:
+    health:
+      probes: #استطلع اِسْتكشَف.
+        enabled: true
+  #"فعّل support ديال Kubernetes probes"
+  #✔️ Spring كيعطي responses مهيئين لـ Kubernetes
+  #http://localhost:8071/actuator/health/rediness (STATUS: UP or DOWN)
+  #http://localhost:8071/actuator/health/liveness (STATUS: UP or DOWN)
+
+
