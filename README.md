@@ -1,66 +1,91 @@
-# 🏦 Microservices Banking System
+## 🚀 Microservices Banking System
 
-This project is a **Spring Boot Microservices Architecture** using **Spring Cloud Config Server**, **Docker**, and **RabbitMQ**.
+A **Spring Boot Microservices Architecture** for a banking system, enhanced with **containerized MySQL databases** and orchestrated using **Docker Compose**.
 
 ---
 
-## 🚀 Tech Stack
+## 🧰 Tech Stack
 
-* ☕ Java 21
-* 🌱 Spring Boot
-* ☁️ Spring Cloud Config Server
-* 🐳 Docker & Docker Compose
-* 🐰 RabbitMQ (Message Broker)
-* 📦 GitHub (Config Repository)
+* ☕ **Java 21**
+* 🌱 **Spring Boot**
+* ☁️ **Spring Cloud Config Server**
+* 🐳 **Docker & Docker Compose**
+* 🐰 **RabbitMQ**
+* 🛢️ **MySQL (Containerized per service)**
+* 📦 **GitHub (External Config Repository)**
+
+---
+
+## 🏗️ Architecture Overview
+
+* Each microservice has its **own dedicated MySQL database container**
+* Services communicate via **REST APIs** and **RabbitMQ**
+* Centralized configuration using **Spring Cloud Config Server**
+* All services connected through a **custom Docker network**
 
 ---
 
 ## 📁 Project Structure
 
-```
-v2-spring-cloud-config/
-│── configserver/   # Centralized configuration server
-│── accounts/       # Accounts microservice
-│── loans/          # Loans microservice
-│── cards/          # Cards microservice
-│── docker-compose.yml
-```
-
----
-
-## ⚙️ Configuration Server
-
-* Runs on: `http://localhost:8071`
-* Fetches config from GitHub:
-
-  ```
-  https://github.com/Med124s/bank-config
-  ```
-* Example:
-
-  ```
-  http://localhost:8071/accounts/prod
-  ```
-
----
-
-## 🐳 Run with Docker
-
 ```bash
-docker-compose up -d
+microservices-banking-system/
+│
+├── Configurations_management_microservices/
+│   ├── configserver/        # Spring Cloud Config Server
+│   └── config-repo/         # External configuration repository (Git-based)
+│   ├── accounts/            # Accounts microservice
+│   ├── loans/               # Loans microservice
+│   ├── cards/               # Cards microservice
+│   ├── docker-compose.yml   # Docker orchestration (services + databases)
+│   └── common-config.yml    # Shared Docker configuration
+│
+├── Microservices_MySQL_DB_Containers/
+│   ├── configserver/        # Spring Cloud Config Server
+│   └── config-repo/         # External configuration repository (Git-based)
+│   ├── accounts/            # Accounts microservice
+│   ├── loans/               # Loans microservice
+│   ├── cards/               # Cards microservice
+│   ├── docker-compose.yml   # Docker orchestration (services + databases)
+│   └── common-config.yml    # Shared Docker configuration
+│
+└── README.md
 ```
 
 ---
 
-## 🔄 Health Check
+## 🐳 Docker Compose Setup
 
-Each service uses Spring Boot Actuator:
+### 🔹 Microservices
 
+* `accounts-ms`
+* `loans-ms`
+* `cards-ms`
+* `configserver-ms`
+
+### 🔹 Databases (MySQL Containers)
+
+* `accountsdb`
+* `loansdb`
+* `cardsdb`
+
+Each service connects to its database using the container name:
+
+```properties
+SPRING_DATASOURCE_URL=jdbc:mysql://accountsdb:3306/accountsdb
 ```
-/actuator/health
-```
 
-Docker ensures services start in order using:
+---
+
+## 🌐 Docker Network
+
+* Custom network: `mbenyghil` (bridge)
+* Enables communication between containers using **service names** instead of `localhost`
+
+---
+
+## 🔄 Service Startup & Health Checks
+
+Services start in the correct order using:
 
 ```yaml
 depends_on:
@@ -68,60 +93,56 @@ depends_on:
     condition: service_healthy
 ```
 
+Health check endpoint:
+
+```bash
+/actuator/health
+```
+
 ---
 
-## 📨 Message Broker
+## 📨 Message Broker (RabbitMQ)
 
-RabbitMQ is used for:
+Used for:
 
-* Config refresh
-* Event-driven communication
+* 🔁 Configuration refresh
+* 📡 Event-driven communication
 
 Default access:
 
 * URL: http://localhost:15672
-* Username: guest
-* Password: guest
+* Username: `guest`
+* Password: `guest`
 
 ---
 
-## 🔐 Encryption API
+## ▶️ Run the Project
 
-Config Server provides encryption endpoints:
-
-* Encrypt:
-
-  ```
-  POST /encrypt
-  ```
-* Decrypt:
-
-  ```
-  POST /decrypt
-  ```
+```bash
+docker-compose up -d
+```
 
 ---
 
-## 📌 Notes
+## 📌 Key Improvements (Latest Update)
 
-* Configurations are stored in a separate Git repository
-* `force-pull` ensures latest updates are always fetched
-* `clone-on-start` loads config at startup
+* ✅ Added **MySQL container per microservice**
+* ✅ Improved **service isolation and scalability**
+* ✅ Configured **Docker networking for inter-service communication**
+* ✅ Integrated **health checks for reliable startup order**
 
 ---
 
 ## 👨‍💻 Author
 
-**Mohamed Ben-yghil**
+**Mohamed Benyghil**
 Software Engineering
 
 ---
 
 ## ⭐ Future Improvements
 
-* Add API Gateway
-* Integrate Eureka Service Discovery
-* Add centralized logging (ELK)
-* CI/CD pipeline (GitHub Actions)
-
----
+* API Gateway
+* Eureka Service Discovery
+* Centralized Logging (ELK Stack)
+* CI/CD Pipeline (GitHub Actions)
